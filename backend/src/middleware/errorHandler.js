@@ -1,9 +1,4 @@
-/**
- * Central place to translate internal errors (TMDB failures, circuit
- * breaker trips, bad input) into a consistent JSON error shape the
- * frontend can rely on: { error: string, code?: string }.
- */
-// eslint-disable-next-line no-unused-vars
+
 module.exports = function errorHandler(err, req, res, next) {
   console.error(err);
 

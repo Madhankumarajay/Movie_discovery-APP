@@ -7,13 +7,7 @@ import MovieGrid from '../components/MovieGrid.jsx';
 import { useDebounce } from '../hooks/useDebounce';
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll';
 
-// Module-level cache (survives navigating to a movie's details page and
-// back, without persisting across a full reload). Keyed by the exact
-// query the user was browsing, so "continue exploring / open a movie /
-// come back" restores the list and scroll position instead of starting
-// over at page 1. A real product might use React Query or persist this
-// in sessionStorage; this is a deliberately small version of the same
-// idea, sized for the scope of this assignment.
+
 const resultsCache = new Map();
 
 export default function Home() {
@@ -35,14 +29,12 @@ export default function Home() {
   const cacheKey = `${debouncedQuery}|${genre}|${sortBy}`;
   const requestIdRef = useRef(0);
 
-  // Keep the URL in sync with the debounced search so the browse state
-  // is shareable/bookmarkable and survives a back-navigation.
   useEffect(() => {
     const next = new URLSearchParams(searchParams);
     if (debouncedQuery) next.set('q', debouncedQuery);
     else next.delete('q');
     setSearchParams(next, { replace: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [debouncedQuery]);
 
   useEffect(() => {
@@ -61,8 +53,7 @@ export default function Home() {
           sortBy: query ? undefined : sortBy,
           query: debouncedQuery || undefined,
         });
-        // Ignore stale responses from a superseded request (e.g. the
-        // user changed filters again before this one returned).
+       
         if (requestId !== requestIdRef.current) return;
 
         setMovies((prev) => {
@@ -79,12 +70,10 @@ export default function Home() {
         setError(err.message);
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
     [genre, sortBy, debouncedQuery, cacheKey]
   );
 
-  // Whenever the effective query changes, either restore from cache or
-  // fetch page 1 fresh.
   useEffect(() => {
     const cached = resultsCache.get(cacheKey);
     if (cached) {
@@ -96,7 +85,6 @@ export default function Home() {
       setMovies([]);
       fetchPage(1, { append: false });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cacheKey]);
 
   const loadMore = useCallback(() => {
@@ -116,8 +104,8 @@ export default function Home() {
   return (
     <div className="page">
       <section className="hero">
-        <h1>Find something worth watching</h1>
-        <p>Browse trending titles, search for a favorite, or filter by genre.</p>
+        <h1>Every Movie has a Story.Find Yours....</h1>
+        <p>Explore Movies,Discover hidden Gems,and find your next Favorite Movies..</p>
         <SearchBar value={searchInput} onChange={setSearchInput} />
       </section>
 

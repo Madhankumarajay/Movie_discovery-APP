@@ -2,14 +2,6 @@ const cache = require('../services/cacheService');
 const tmdb = require('../services/tmdbService');
 const config = require('../config');
 
-/**
- * GET /api/movies?page=&genre=&sortBy=&query=
- *
- * One endpoint covers both "browse" (default, sorted by popularity) and
- * "search" (when query is present) so the frontend can treat them as the
- * same paginated list and swap seamlessly between searching and
- * filtering without a different code path per mode.
- */
 async function discover(req, res, next) {
   try {
     const page = Math.max(1, Number(req.query.page) || 1);

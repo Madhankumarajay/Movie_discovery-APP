@@ -10,8 +10,9 @@ module.exports = {
     imageBaseUrl: process.env.TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org/t/p',
   },
 
-  db: {
-    path: process.env.DB_PATH || './data/app.db',
+  mongodb: {
+    url: process.env.MONGODB_URL || 'mongodb://localhost:27017',
+    dbName: process.env.MONGODB_DB_NAME || 'movie_discovery',
   },
 
   cache: {

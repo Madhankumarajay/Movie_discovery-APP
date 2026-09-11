@@ -3,12 +3,6 @@ import { api } from '../api/client';
 
 const WishlistContext = createContext(null);
 
-/**
- * Wishlist state lives at the app level (not per-page) so that adding or
- * removing a movie on the details page is instantly reflected in the
- * browse grid and the wishlist page, without re-fetching everywhere.
- * This is what "navigate without losing context" means in practice.
- */
 export function WishlistProvider({ children }) {
   const [ids, setIds] = useState(() => new Set());
   const [items, setItems] = useState([]);
@@ -33,8 +27,7 @@ export function WishlistProvider({ children }) {
   const toggle = useCallback(
     async (movie) => {
       const saved = ids.has(movie.id);
-      // Optimistic update: the button should feel instant, not wait on
-      // a round trip. We roll back if the request fails.
+      
       setIds((prev) => {
         const next = new Set(prev);
         saved ? next.delete(movie.id) : next.add(movie.id);

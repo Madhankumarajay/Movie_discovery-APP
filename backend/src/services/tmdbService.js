@@ -14,16 +14,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Calls TMDB with:
- *  - a short timeout, so one slow request can't tie up the app
- *  - retry with exponential backoff for transient failures (timeouts,
- *    5xx) - but NOT for 4xx errors, which are our mistake, not a
- *    transient problem
- *  - respect for TMDB's 429 (Too Many Requests) via Retry-After
- *  - a circuit breaker so repeated failures fail fast instead of piling
- *    up retries against a service that is clearly down
- */
 async function callTmdb(path, params = {}, { retries = 2 } = {}) {
   if (!breaker.canRequest()) {
     const err = new Error('TMDB circuit breaker is open - upstream API considered unavailable');
@@ -32,7 +22,6 @@ async function callTmdb(path, params = {}, { retries = 2 } = {}) {
   }
 
   let attempt = 0;
-  // eslint-disable-next-line no-constant-condition
   while (true) {
     try {
       const response = await client.get(path, { params });
@@ -40,8 +29,6 @@ async function callTmdb(path, params = {}, { retries = 2 } = {}) {
       return response.data;
     } catch (err) {
       const status = err.response?.status;
-
-      // Rate limited - honour Retry-After rather than a fixed backoff.
       if (status === 429 && attempt < retries) {
         const retryAfterSec = Number(err.response.headers['retry-after']) || 1;
         await sleep(retryAfterSec * 1000);
@@ -49,7 +36,6 @@ async function callTmdb(path, params = {}, { retries = 2 } = {}) {
         continue;
       }
 
-      // Transient server-side / network failure - retry with backoff.
       const isTransient = !status || status >= 500 || err.code === 'ECONNABORTED';
       if (isTransient && attempt < retries) {
         await sleep(2 ** attempt * 300);
@@ -66,19 +52,10 @@ async function callTmdb(path, params = {}, { retries = 2 } = {}) {
   }
 }
 
-/** Builds a full poster/backdrop URL, or null if TMDB didn't return one -
- * the client should never have to know TMDB's image path scheme. */
 function imageUrl(path, size = 'w500') {
   return path ? `${config.tmdb.imageBaseUrl}/${size}${path}` : null;
 }
 
-/**
- * Normalizes a raw TMDB movie object into the shape our frontend depends
- * on, filling in defaults for fields TMDB sometimes omits or returns as
- * empty strings (overview, release_date, vote_average are the common
- * offenders). This is the "abstraction layer" - the client never sees a
- * raw TMDB payload or has to defend against its inconsistencies.
- */
 function normalizeMovie(raw) {
   return {
     id: raw.id,

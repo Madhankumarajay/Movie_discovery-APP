@@ -1,35 +1,58 @@
-const db = require('./database');
+const { getDatabase } = require('./database');
 
-const listStmt = db.prepare(
-  'SELECT movie_id as movieId, title, poster_url as posterUrl, year, rating, added_at as addedAt FROM wishlist WHERE device_id = ? ORDER BY added_at DESC'
-);
-const findStmt = db.prepare('SELECT 1 FROM wishlist WHERE device_id = ? AND movie_id = ?');
-const insertStmt = db.prepare(`
-  INSERT INTO wishlist (device_id, movie_id, title, poster_url, year, rating)
-  VALUES (@deviceId, @movieId, @title, @posterUrl, @year, @rating)
-  ON CONFLICT(device_id, movie_id) DO NOTHING
-`);
-const deleteStmt = db.prepare('DELETE FROM wishlist WHERE device_id = ? AND movie_id = ?');
+function collection() {
+  return getDatabase().collection('wishlist');
+}
+
+async function list(deviceId) {
+  return await collection()
+      .find({ deviceId })
+      .sort({ addedAt: -1 })
+      .toArray();
+}
+
+async function isSaved(deviceId, movieId) {
+  const movie = await collection().findOne({
+    deviceId,
+    movieId: Number(movieId)
+  });
+
+  return !!movie;
+}
+
+async function add(deviceId, movie) {
+  await collection().updateOne(
+      {
+        deviceId,
+        movieId: Number(movie.id)
+      },
+      {
+        $setOnInsert: {
+          deviceId,
+          movieId: Number(movie.id),
+          title: movie.title,
+          posterUrl: movie.posterUrl,
+          year: movie.year,
+          rating: movie.rating,
+          addedAt: new Date()
+        }
+      },
+      { upsert: true }
+  );
+}
+
+async function remove(deviceId, movieId) {
+  const result = await collection().deleteOne({
+    deviceId,
+    movieId: Number(movieId)
+  });
+
+  return result.deletedCount > 0;
+}
 
 module.exports = {
-  list(deviceId) {
-    return listStmt.all(deviceId);
-  },
-  isSaved(deviceId, movieId) {
-    return !!findStmt.get(deviceId, movieId);
-  },
-  add(deviceId, movie) {
-    insertStmt.run({
-      deviceId,
-      movieId: movie.id,
-      title: movie.title,
-      posterUrl: movie.posterUrl,
-      year: movie.year,
-      rating: movie.rating,
-    });
-  },
-  remove(deviceId, movieId) {
-    const result = deleteStmt.run(deviceId, movieId);
-    return result.changes > 0;
-  },
+  list,
+  isSaved,
+  add,
+  remove
 };

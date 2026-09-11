@@ -25,7 +25,7 @@ async function request(path, options = {}) {
       const body = await res.json();
       if (body?.error) message = body.error;
     } catch {
-      // ignore - response wasn't JSON
+
     }
     const err = new Error(message);
     err.status = res.status;

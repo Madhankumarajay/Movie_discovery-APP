@@ -7,7 +7,7 @@ export default function Navbar() {
   return (
     <header className="navbar">
       <NavLink to="/" className="navbar__brand">
-        🎞️ Reel Find
+        MOVIES FROM TMDB WEB
       </NavLink>
       <nav className="navbar__links">
         <NavLink to="/" end className={({ isActive }) => (isActive ? 'active' : '')}>
